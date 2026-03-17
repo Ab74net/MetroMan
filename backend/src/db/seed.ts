@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import { config } from "../config";
 import { createLogger } from "../utils/logger";
 import {
@@ -92,7 +92,7 @@ async function main(): Promise<void> {
 
   await prisma.$connect();
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$executeRawUnsafe(`
       TRUNCATE TABLE
         predictions,

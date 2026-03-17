@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     "./types/metro": "./types/metro.ts",
-    "./types/ws-events": "./types/ws-events.ts"
+    "./types/ws-events": "./types/ws-events.ts",
+    "./types/api-responses": "./types/api-responses.ts"
   },
   "scripts": {
     "build": "tsc --declaration --emitDeclarationOnly",

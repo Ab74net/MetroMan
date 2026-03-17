@@ -7,6 +7,7 @@ const environmentSchema = z.object({
   WMATA_API_KEY: z.string().min(1, "WMATA_API_KEY is required."),
   WMATA_GTFS_RT_URL: z.string().url("WMATA_GTFS_RT_URL must be a valid URL."),
   WMATA_ALERTS_URL: z.string().url("WMATA_ALERTS_URL must be a valid URL."),
+  FRONTEND_ORIGIN: z.string().url("FRONTEND_ORIGIN must be a valid URL.").default("http://localhost:3000"),
   POLL_INTERVAL_MS: z.coerce
     .number()
     .int("POLL_INTERVAL_MS must be an integer.")
@@ -26,6 +27,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   WMATA_API_KEY: process.env.WMATA_API_KEY,
   WMATA_GTFS_RT_URL: process.env.WMATA_GTFS_RT_URL,
   WMATA_ALERTS_URL: process.env.WMATA_ALERTS_URL,
+  FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN,
   POLL_INTERVAL_MS: process.env.POLL_INTERVAL_MS,
   PORT: process.env.PORT,
   NODE_ENV: process.env.NODE_ENV
