@@ -1,4 +1,6 @@
 export type LineId = "red" | "blue" | "orange" | "silver" | "green" | "yellow";
+export type TrainDirection = 0 | 1;
+export type AlertSeverity = "INFO" | "WARNING" | "SEVERE";
 
 export interface Line {
   id: LineId;
@@ -39,7 +41,7 @@ export interface Trip {
   id: string;
   lineId: LineId;
   headsign: string;
-  direction: 0 | 1;
+  direction: TrainDirection;
   shapeId: string;
 }
 
@@ -67,8 +69,6 @@ export interface Prediction {
   carCount: number;
   capturedAt: string;
 }
-
-export type AlertSeverity = "INFO" | "WARNING" | "SEVERE";
 
 export interface Alert {
   id: string;

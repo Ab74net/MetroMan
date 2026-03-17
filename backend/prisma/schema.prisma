@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Line {
+  id             String            @id
+  name           String
+  colorHex       String            @map("color_hex")
+  displayOrder   Int               @map("display_order")
+  stationLines   StationLine[]
+  routeSegments  RouteSegment[]
+  trips          Trip[]
+  trainPositions TrainPosition[]
+  predictions    Prediction[]
+
+  @@map("lines")
+}
+
+model Station {
+  id                    String
+  name                  String
+  location              Unsupported("geography(Point, 4326)")
+  address               String?
+  isTransferStation     Boolean         @map("is_transfer_station")
+  hasElevator           Boolean         @map("has_elevator")
+  hasParking            Boolean         @map("has_parking")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  stationLines          StationLine[]
+  routeSegmentsFrom     RouteSegment[]  @relation("RouteSegmentFrom")
+  routeSegmentsTo       RouteSegment[]  @relation("RouteSegmentTo")
+  currentTrainPositions TrainPosition[] @relation("PositionCurrent")
+  nextTrainPositions    TrainPosition[] @relation("PositionNext")
+  stationPredictions    Prediction[]    @relation("PredictionsAtStation")
+  destinationPredictions Prediction[]   @relation("PredictionsDestination")
+
+  @@map("stations")
+}
+
+model StationLine {
+  stationId String  @map("station_id")
+  lineId    String  @map("line_id")
+  sequence  Int
+  station   Station @relation(fields: [stationId], references: [id])
+  line      Line    @relation(fields: [lineId], references: [id])
+
+  @@id([stationId, lineId])
+  @@map("station_lines")
+}
+
+model RouteSegment {
+  id            Int     @id @default(autoincrement())
+  lineId        String  @map("line_id")
+  fromStationId String  @map("from_station_id")
+  toStationId   String  @map("to_station_id")
+  sequence      Int
+  geometry      Unsupported("geography(LINESTRING, 4326)")
+  lengthMeters  Float   @map("length_meters") @db.DoublePrecision
+  line          Line    @relation(fields: [lineId], references: [id])
+  fromStation   Station @relation("RouteSegmentFrom", fields: [fromStationId], references: [id])
+  toStation     Station @relation("RouteSegmentTo", fields: [toStationId], references: [id])
+
+  @@map("route_segments")
+}
+
+model Trip {
+  id       String   @id
+  lineId   String   @map("line_id")
+  headsign String
+  direction Int
+  shapeId  String   @map("shape_id")
+  line     Line     @relation(fields: [lineId], references: [id])
+  positions TrainPosition[]
+
+  @@map("trips")
+}
+
+model TrainPosition {
+  trainId          String    @id @map("train_id")
+  tripId           String    @map("trip_id")
+  lineId           String    @map("line_id")
+  position         Unsupported("geography(Point, 4326)")
+  bearing          Float
+  speedKmh         Float     @map("speed_kmh")
+  currentStationId String?   @map("current_station_id")
+  nextStationId    String?   @map("next_station_id")
+  progressPct      Float     @map("progress_pct")
+  updatedAt        DateTime  @default(now()) @map("updated_at")
+
+  trip            Trip      @relation(fields: [tripId], references: [id])
+  line            Line      @relation(fields: [lineId], references: [id])
+  currentStation  Station?  @relation("PositionCurrent", fields: [currentStationId], references: [id])
+  nextStation     Station?  @relation("PositionNext", fields: [nextStationId], references: [id])
+  predictions     Prediction[]
+
+  @@map("train_positions")
+}
+
+model Prediction {
+  id            Int          @id @default(autoincrement())
+  stationId     String       @map("station_id")
+  trainId       String       @map("train_id")
+  lineId        String       @map("line_id")
+  destinationId String       @map("destination_id")
+  minutesAway   Int          @map("minutes_away")
+  carCount      Int          @map("car_count")
+  capturedAt    DateTime     @default(now()) @map("captured_at")
+
+  station     Station      @relation("PredictionsAtStation", fields: [stationId], references: [id])
+  train       TrainPosition @relation(fields: [trainId], references: [trainId])
+  line        Line         @relation(fields: [lineId], references: [id])
+  destination Station      @relation("PredictionsDestination", fields: [destinationId], references: [id])
+
+  @@map("predictions")
+}
+
+model Alert {
+  id                   String   @id
+  header               String
+  description          String
+  severity             String
+  affectedLineIds      String[] @map("affected_line_ids") @db.Text[]
+  affectedStationIds   String[] @map("affected_station_ids") @db.Text[]
+  startsAt             DateTime @map("starts_at")
+  endsAt               DateTime @map("ends_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  @@map("alerts")
+}

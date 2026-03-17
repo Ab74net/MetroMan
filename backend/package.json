@@ -1,0 +1,35 @@
+{
+  "name": "@metro/backend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Express and Prisma backend scaffold for the Washington DC Metro 3D map.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "ts-node --project tsconfig.json src/db/seed.ts",
+    "db:reset": "prisma migrate reset --force",
+    "prisma:generate": "prisma generate",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "prisma": {
+    "seed": "ts-node --project tsconfig.json src/db/seed.ts"
+  },
+  "dependencies": {
+    "@metro/shared": "file:../shared",
+    "@prisma/client": "^5.12.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.11.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.30",
+    "prisma": "^5.12.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.5"
+  }
+}

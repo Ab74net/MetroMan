@@ -1,11 +1,15 @@
 {
   "extends": "next/tsconfig.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "bundler",
     "noEmit": true,
-    "incremental": true
+    "incremental": true,
+    "paths": {
+      "@metro/shared/*": ["../shared/*"]
+    }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts"],
   "exclude": ["node_modules"]

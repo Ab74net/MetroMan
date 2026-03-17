@@ -1,13 +1,17 @@
 {
-  "name": "metro-shared",
+  "name": "@metro/shared",
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "exports": {
+    "./types/metro": "./types/metro.ts",
+    "./types/ws-events": "./types/ws-events.ts"
+  },
   "scripts": {
     "build": "tsc --declaration --emitDeclarationOnly",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "typescript": "^5.4.5"
   }
 }

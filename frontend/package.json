@@ -1,5 +1,5 @@
 {
-  "name": "metro-frontend",
+  "name": "@metro/frontend",
   "private": true,
   "version": "0.1.0",
   "description": "Next.js 14 App Router scaffold for the DC Metro 3D map.",
@@ -11,14 +11,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "14.0.0",
-    "react": "18.3.0",
-    "react-dom": "18.3.0"
+    "@metro/shared": "file:../shared",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/node": "^20.5.0",
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
-    "typescript": "^5.3.0"
+    "@types/node": "^20.11.30",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.22",
+    "typescript": "^5.4.5"
   }
 }

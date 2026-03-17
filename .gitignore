@@ -1,0 +1,10 @@
+node_modules/
+frontend/.next/
+frontend/out/
+backend/dist/
+backend/generated/
+*.log
+.env
+.env.local
+.DS_Store
+
