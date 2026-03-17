@@ -1,6 +1,9 @@
-export type LineId = "red" | "blue" | "orange" | "silver" | "green" | "yellow";
+export const LINE_IDS = ["red", "blue", "orange", "silver", "green", "yellow"] as const;
+export const ALERT_SEVERITIES = ["INFO", "WARNING", "SEVERE"] as const;
+
+export type LineId = (typeof LINE_IDS)[number];
 export type TrainDirection = 0 | 1;
-export type AlertSeverity = "INFO" | "WARNING" | "SEVERE";
+export type AlertSeverity = (typeof ALERT_SEVERITIES)[number];
 
 export interface Line {
   id: LineId;
@@ -78,6 +81,17 @@ export interface Alert {
   affectedLineIds: LineId[];
   affectedStationIds: string[];
   startsAt: string;
-  endsAt: string;
+  endsAt: string | null;
   createdAt: string;
+}
+
+const lineIdSet = new Set<LineId>(LINE_IDS);
+const alertSeveritySet = new Set<AlertSeverity>(ALERT_SEVERITIES);
+
+export function isLineId(value: string): value is LineId {
+  return lineIdSet.has(value as LineId);
+}
+
+export function isAlertSeverity(value: string): value is AlertSeverity {
+  return alertSeveritySet.has(value as AlertSeverity);
 }

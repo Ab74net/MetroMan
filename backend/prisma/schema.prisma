@@ -8,10 +8,10 @@ datasource db {
 }
 
 model Line {
-  id             String            @id
-  name           String
-  colorHex       String            @map("color_hex")
-  displayOrder   Int               @map("display_order")
+  id             String          @id @db.Text
+  name           String          @db.Text
+  colorHex       String          @map("color_hex") @db.Text
+  displayOrder   Int             @map("display_order")
   stationLines   StationLine[]
   routeSegments  RouteSegment[]
   trips          Trip[]
@@ -22,112 +22,116 @@ model Line {
 }
 
 model Station {
-  id                    String
-  name                  String
-  location              Unsupported("geography(Point, 4326)")
-  address               String?
-  isTransferStation     Boolean         @map("is_transfer_station")
-  hasElevator           Boolean         @map("has_elevator")
-  hasParking            Boolean         @map("has_parking")
-  createdAt             DateTime        @default(now()) @map("created_at")
-  stationLines          StationLine[]
-  routeSegmentsFrom     RouteSegment[]  @relation("RouteSegmentFrom")
-  routeSegmentsTo       RouteSegment[]  @relation("RouteSegmentTo")
-  currentTrainPositions TrainPosition[] @relation("PositionCurrent")
-  nextTrainPositions    TrainPosition[] @relation("PositionNext")
-  stationPredictions    Prediction[]    @relation("PredictionsAtStation")
-  destinationPredictions Prediction[]   @relation("PredictionsDestination")
+  id                     String          @id @db.Text
+  name                   String          @db.Text
+  location               Unsupported("geography(POINT, 4326)")
+  address                String?         @db.Text
+  isTransferStation      Boolean         @map("is_transfer_station")
+  hasElevator            Boolean         @map("has_elevator")
+  hasParking             Boolean         @map("has_parking")
+  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  stationLines           StationLine[]
+  routeSegmentsFrom      RouteSegment[]  @relation("RouteSegmentFrom")
+  routeSegmentsTo        RouteSegment[]  @relation("RouteSegmentTo")
+  currentTrainPositions  TrainPosition[] @relation("PositionCurrent")
+  nextTrainPositions     TrainPosition[] @relation("PositionNext")
+  stationPredictions     Prediction[]    @relation("PredictionsAtStation")
+  destinationPredictions Prediction[]    @relation("PredictionsDestination")
 
   @@map("stations")
 }
 
 model StationLine {
-  stationId String  @map("station_id")
-  lineId    String  @map("line_id")
+  stationId String  @map("station_id") @db.Text
+  lineId    String  @map("line_id") @db.Text
   sequence  Int
-  station   Station @relation(fields: [stationId], references: [id])
-  line      Line    @relation(fields: [lineId], references: [id])
+  station   Station @relation(fields: [stationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  line      Line    @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@id([stationId, lineId])
+  @@index([lineId, sequence])
   @@map("station_lines")
 }
 
 model RouteSegment {
   id            Int     @id @default(autoincrement())
-  lineId        String  @map("line_id")
-  fromStationId String  @map("from_station_id")
-  toStationId   String  @map("to_station_id")
+  lineId        String  @map("line_id") @db.Text
+  fromStationId String  @map("from_station_id") @db.Text
+  toStationId   String  @map("to_station_id") @db.Text
   sequence      Int
   geometry      Unsupported("geography(LINESTRING, 4326)")
-  lengthMeters  Float   @map("length_meters") @db.DoublePrecision
-  line          Line    @relation(fields: [lineId], references: [id])
-  fromStation   Station @relation("RouteSegmentFrom", fields: [fromStationId], references: [id])
-  toStation     Station @relation("RouteSegmentTo", fields: [toStationId], references: [id])
+  lengthMeters  Float   @default(dbgenerated("st_length(geometry)")) @map("length_meters") @db.DoublePrecision
+  line          Line    @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  fromStation   Station @relation("RouteSegmentFrom", fields: [fromStationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  toStation     Station @relation("RouteSegmentTo", fields: [toStationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@index([lineId, sequence])
   @@map("route_segments")
 }
 
 model Trip {
-  id       String   @id
-  lineId   String   @map("line_id")
-  headsign String
+  id        String          @id @db.Text
+  lineId    String          @map("line_id") @db.Text
+  headsign  String          @db.Text
   direction Int
-  shapeId  String   @map("shape_id")
-  line     Line     @relation(fields: [lineId], references: [id])
+  shapeId   String          @map("shape_id") @db.Text
+  line      Line            @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   positions TrainPosition[]
 
+  @@index([lineId, direction])
   @@map("trips")
 }
 
 model TrainPosition {
-  trainId          String    @id @map("train_id")
-  tripId           String    @map("trip_id")
-  lineId           String    @map("line_id")
-  position         Unsupported("geography(Point, 4326)")
-  bearing          Float
-  speedKmh         Float     @map("speed_kmh")
-  currentStationId String?   @map("current_station_id")
-  nextStationId    String?   @map("next_station_id")
-  progressPct      Float     @map("progress_pct")
-  updatedAt        DateTime  @default(now()) @map("updated_at")
+  trainId          String       @id @map("train_id") @db.Text
+  tripId           String       @map("trip_id") @db.Text
+  lineId           String       @map("line_id") @db.Text
+  position         Unsupported("geography(POINT, 4326)")
+  bearing          Float        @db.DoublePrecision
+  speedKmh         Float        @map("speed_kmh") @db.DoublePrecision
+  currentStationId String?      @map("current_station_id") @db.Text
+  nextStationId    String?      @map("next_station_id") @db.Text
+  progressPct      Float        @map("progress_pct") @db.DoublePrecision
+  updatedAt        DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  trip             Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  line             Line         @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  currentStation   Station?     @relation("PositionCurrent", fields: [currentStationId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  nextStation      Station?     @relation("PositionNext", fields: [nextStationId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  predictions      Prediction[]
 
-  trip            Trip      @relation(fields: [tripId], references: [id])
-  line            Line      @relation(fields: [lineId], references: [id])
-  currentStation  Station?  @relation("PositionCurrent", fields: [currentStationId], references: [id])
-  nextStation     Station?  @relation("PositionNext", fields: [nextStationId], references: [id])
-  predictions     Prediction[]
-
+  @@index([lineId, updatedAt])
+  @@index([tripId])
   @@map("train_positions")
 }
 
 model Prediction {
-  id            Int          @id @default(autoincrement())
-  stationId     String       @map("station_id")
-  trainId       String       @map("train_id")
-  lineId        String       @map("line_id")
-  destinationId String       @map("destination_id")
-  minutesAway   Int          @map("minutes_away")
-  carCount      Int          @map("car_count")
-  capturedAt    DateTime     @default(now()) @map("captured_at")
+  id            Int           @id @default(autoincrement())
+  stationId     String        @map("station_id") @db.Text
+  trainId       String        @map("train_id") @db.Text
+  lineId        String        @map("line_id") @db.Text
+  destinationId String        @map("destination_id") @db.Text
+  minutesAway   Int           @map("minutes_away")
+  carCount      Int           @map("car_count")
+  capturedAt    DateTime      @default(now()) @map("captured_at") @db.Timestamptz(6)
+  station       Station       @relation("PredictionsAtStation", fields: [stationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  train         TrainPosition @relation(fields: [trainId], references: [trainId], onDelete: Cascade, onUpdate: Cascade)
+  line          Line          @relation(fields: [lineId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  destination   Station       @relation("PredictionsDestination", fields: [destinationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  station     Station      @relation("PredictionsAtStation", fields: [stationId], references: [id])
-  train       TrainPosition @relation(fields: [trainId], references: [trainId])
-  line        Line         @relation(fields: [lineId], references: [id])
-  destination Station      @relation("PredictionsDestination", fields: [destinationId], references: [id])
-
+  @@index([stationId, capturedAt])
   @@map("predictions")
 }
 
 model Alert {
-  id                   String   @id
-  header               String
-  description          String
-  severity             String
-  affectedLineIds      String[] @map("affected_line_ids") @db.Text[]
-  affectedStationIds   String[] @map("affected_station_ids") @db.Text[]
-  startsAt             DateTime @map("starts_at")
-  endsAt               DateTime @map("ends_at")
-  createdAt            DateTime @default(now()) @map("created_at")
+  id                 String   @id @db.Text
+  header             String   @db.Text
+  description        String   @db.Text
+  severity           String   @db.Text
+  affectedLineIds    String[] @map("affected_line_ids")
+  affectedStationIds String[] @map("affected_station_ids")
+  startsAt           DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt             DateTime? @map("ends_at") @db.Timestamptz(6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("alerts")
 }

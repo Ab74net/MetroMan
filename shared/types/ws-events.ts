@@ -1,4 +1,10 @@
-import type { Alert, LineId, Prediction } from "./metro";
+import {
+  isAlertSeverity,
+  isLineId,
+  type Alert,
+  type LineId,
+  type Prediction
+} from "./metro";
 
 export const SERVER_EVENT_TYPE = {
   TRAIN_POSITION: "train:position",
@@ -88,4 +94,100 @@ export function isServerEventType(value: string): value is ServerEventType {
 
 export function isClientEventType(value: string): value is ClientEventType {
   return CLIENT_EVENT_TYPE_SET.has(value as ClientEventType);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function hasString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function hasNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isAlert(value: unknown): value is Alert {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    hasString(value.id) &&
+    hasString(value.header) &&
+    hasString(value.description) &&
+    hasString(value.severity) &&
+    isAlertSeverity(value.severity) &&
+    Array.isArray(value.affectedLineIds) &&
+    value.affectedLineIds.every((lineId) => hasString(lineId) && isLineId(lineId)) &&
+    Array.isArray(value.affectedStationIds) &&
+    value.affectedStationIds.every(hasString) &&
+    hasString(value.startsAt) &&
+    (value.endsAt === null || hasString(value.endsAt)) &&
+    hasString(value.createdAt)
+  );
+}
+
+function isPrediction(value: unknown): value is Prediction {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    hasNumber(value.id) &&
+    hasString(value.stationId) &&
+    hasString(value.trainId) &&
+    hasString(value.lineId) &&
+    isLineId(value.lineId) &&
+    hasString(value.destinationId) &&
+    hasNumber(value.minutesAway) &&
+    hasNumber(value.carCount) &&
+    hasString(value.capturedAt)
+  );
+}
+
+export function isServerEvent(value: unknown): value is ServerEvent {
+  if (!isRecord(value) || !hasString(value.type) || !isServerEventType(value.type) || !isRecord(value.payload)) {
+    return false;
+  }
+
+  if (value.type === SERVER_EVENT_TYPE.TRAIN_POSITION) {
+    return (
+      hasString(value.payload.trainId) &&
+      hasString(value.payload.lineId) &&
+      isLineId(value.payload.lineId) &&
+      hasNumber(value.payload.lat) &&
+      hasNumber(value.payload.lng) &&
+      hasNumber(value.payload.bearing) &&
+      hasNumber(value.payload.progressPct) &&
+      hasNumber(value.payload.segmentId) &&
+      hasString(value.payload.updatedAt)
+    );
+  }
+
+  if (value.type === SERVER_EVENT_TYPE.ALERT_CREATED) {
+    return isAlert(value.payload);
+  }
+
+  return (
+    hasString(value.payload.stationId) &&
+    Array.isArray(value.payload.predictions) &&
+    value.payload.predictions.every(isPrediction)
+  );
+}
+
+export function isClientEvent(value: unknown): value is ClientEvent {
+  if (!isRecord(value) || !hasString(value.type) || !isClientEventType(value.type) || !isRecord(value.payload)) {
+    return false;
+  }
+
+  if (
+    value.type === CLIENT_EVENT_TYPE.SUBSCRIBE_STATION ||
+    value.type === CLIENT_EVENT_TYPE.UNSUBSCRIBE_STATION
+  ) {
+    return hasString(value.payload.stationId);
+  }
+
+  return hasString(value.payload.lineId) && isLineId(value.payload.lineId);
 }
